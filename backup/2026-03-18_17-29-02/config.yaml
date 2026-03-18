@@ -1,0 +1,34 @@
+teams:
+  SecOps:
+    users:
+      - admin
+      - Test1
+    fallback_user: admin
+  SOC-Linux:
+    users:
+      - dan
+      - emma
+      - Test1
+    fallback_user: admin
+  AppSec:
+    users:
+      - frank
+      - grace
+      - Test1
+    fallback_user: admin
+
+routing_rules:
+  - match_rule_groups: ["windows"]
+    owner_group: "SOC-Windows"
+  - match_rule_groups: ["linux"]
+    owner_group: "SOC-Linux"
+  - match_rule_groups: ["web", "apache", "nginx"]
+    owner_group: "AppSec"
+
+tag_rules:
+  - match_rule_groups: ["authentication_failed", "invalid_login", "sshd", "pam"]
+    tags: ["threat-hunting"]
+  - match_rule_groups: ["vulnerability", "vuln", "syscollector"]
+    tags: ["vulnerability-detector"]
+
+default_owner_group: "SecOps"

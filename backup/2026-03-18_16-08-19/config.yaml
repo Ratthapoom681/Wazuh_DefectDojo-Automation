@@ -1,0 +1,28 @@
+teams:
+  SecOps:
+    users:
+      - admin
+      - Test1
+    fallback_user: admin
+  SOC-Linux:
+    users:
+      - dan
+      - emma
+      - Test1
+    fallback_user: admin
+  AppSec:
+    users:
+      - frank
+      - grace
+      - Test1
+    fallback_user: admin
+
+routing_rules:
+  - match_rule_groups: ["windows"]
+    owner_group: "SOC-Windows"
+  - match_rule_groups: ["linux"]
+    owner_group: "SOC-Linux"
+  - match_rule_groups: ["web", "apache", "nginx"]
+    owner_group: "AppSec"
+
+default_owner_group: "SecOps"
