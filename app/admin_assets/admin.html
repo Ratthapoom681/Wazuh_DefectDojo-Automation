@@ -12,144 +12,24 @@
       <div>
         <p class="eyebrow">Admin Console</p>
         <h1>Wazuh to DefectDojo</h1>
-        <p class="lede">Configure local routing and DefectDojo destination paths from one place.</p>
-      </div>
-      <div class="hero-actions">
-        <button class="ghost" id="reloadBtn">Reload</button>
-        <button class="primary" id="saveBtn">Save Config</button>
+        <p class="lede">Choose the admin area you want to work in.</p>
       </div>
     </div>
 
-    <div class="status" id="status"></div>
-
-    <div class="layout">
-      <section class="panel">
+    <div class="dashboard-grid">
+      <a class="dashboard-card" href="/admin/destination">
         <h2>Destination Path</h2>
-        <div class="form-grid">
-          <div class="field">
-            <label for="productTypeSelect">Product Type</label>
-            <select id="productTypeSelect"></select>
-          </div>
-          <div class="field">
-            <label for="productTypeDescription">Product Type Description</label>
-            <input id="productTypeDescription" />
-          </div>
-          <div class="field">
-            <label for="productSelect">Product</label>
-            <select id="productSelect"></select>
-          </div>
-          <div class="field">
-            <label for="productDescription">Product Description</label>
-            <input id="productDescription" />
-          </div>
-          <div class="field">
-            <label for="engagementSelect">Engagement</label>
-            <select id="engagementSelect"></select>
-          </div>
-          <div class="field">
-            <label for="engagementStatus">Engagement Status</label>
-            <input id="engagementStatus" />
-          </div>
-          <div class="field">
-            <label for="engagementStart">Engagement Start</label>
-            <input id="engagementStart" />
-          </div>
-          <div class="field">
-            <label for="engagementEnd">Engagement End</label>
-            <input id="engagementEnd" />
-          </div>
-          <div class="field">
-            <label for="testTitlePrefix">Test Title Prefix</label>
-            <input id="testTitlePrefix" />
-          </div>
-          <div class="field">
-            <label for="testTypeId">Test Type ID</label>
-            <input id="testTypeId" type="number" />
-          </div>
-        </div>
-
-        <h3>Category to Test Path</h3>
-        <div class="category-grid">
-          <div class="field">
-            <label for="threatHuntingTest">Threat Hunting Test Category</label>
-            <input id="threatHuntingTest" />
-          </div>
-          <div class="field">
-            <label for="vulnerabilityTest">Vulnerability Detector Test Category</label>
-            <input id="vulnerabilityTest" />
-          </div>
-          <div class="field full">
-            <label for="defaultTest">Default Test Category</label>
-            <input id="defaultTest" />
-          </div>
-        </div>
-
-        <h3>Routing and Teams</h3>
-        <div class="editor-stack">
-          <div class="editor-group">
-            <div class="editor-head">
-              <div>
-                <h4>Teams</h4>
-                <p>Set the team name, assigned users, and fallback user.</p>
-              </div>
-              <button class="ghost" type="button" id="addTeamBtn">Add Team</button>
-            </div>
-            <div class="field">
-              <label for="defaultOwnerGroup">Default Owner Group</label>
-              <select id="defaultOwnerGroup"></select>
-            </div>
-            <div class="editor-list" id="teamsEditor"></div>
-          </div>
-
-          <div class="editor-group">
-            <div class="editor-head">
-              <div>
-                <h4>Routing Rules</h4>
-                <p>Map Wazuh rule groups to the team that should own the finding.</p>
-              </div>
-              <button class="ghost" type="button" id="addRoutingRuleBtn">Add Rule</button>
-            </div>
-            <div class="editor-list" id="routingRulesEditor"></div>
-          </div>
-
-          <div class="editor-group">
-            <div class="editor-head">
-              <div>
-                <h4>Tag Rules</h4>
-                <p>Apply extra tags when alerts match these Wazuh rule groups.</p>
-              </div>
-              <button class="ghost" type="button" id="addTagRuleBtn">Add Tag Rule</button>
-            </div>
-            <div class="editor-list" id="tagRulesEditor"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>DefectDojo Inventory</h2>
-        <div class="inventory" id="inventory"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Create DefectDojo Objects</h2>
-        <div class="wizard-steps" id="wizardSteps">
-          <span class="wizard-step active">1. Product Type</span>
-          <span class="wizard-step">2. Product</span>
-          <span class="wizard-step">3. Engagement</span>
-          <span class="wizard-step">4. Test</span>
-        </div>
-        <form class="create-card" id="wizardForm">
-          <h3 id="wizardTitle">Step 1: Product Type</h3>
-          <div class="create-fields" id="wizardFields"></div>
-          <div class="wizard-actions">
-            <button class="ghost" type="button" id="wizardBack">Back</button>
-            <button class="ghost" type="button" id="wizardNext">Next</button>
-            <button class="primary" type="submit" id="wizardFinish">Create Path</button>
-          </div>
-        </form>
-      </section>
+        <p>Choose the Product Type, Product, Engagement, and test category mapping used by alerts.</p>
+      </a>
+      <a class="dashboard-card" href="/admin/routing">
+        <h2>Routing and Teams</h2>
+        <p>Manage teams, default ownership, routing rules, and auto-tag rules.</p>
+      </a>
+      <a class="dashboard-card" href="/admin/create">
+        <h2>Create Path</h2>
+        <p>Create a new DefectDojo path in one guided flow, then use it from the destination page.</p>
+      </a>
     </div>
   </div>
-  <script src="/admin/assets/admin.js"></script>
 </body>
 </html>

@@ -55,6 +55,31 @@ body {
   gap: 10px;
 }
 
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nav-link.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #134e4a;
+}
+
 .status {
   min-height: 22px;
   margin-bottom: 16px;
@@ -155,6 +180,34 @@ button {
 .inventory-group h3 {
   margin: 0 0 8px;
   font-size: 16px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.dashboard-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: white;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-card h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.dashboard-card p {
+  margin: 0;
+  color: var(--muted);
 }
 
 .pills {
@@ -316,6 +369,10 @@ button {
 
 @media (max-width: 1000px) {
   .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
 }

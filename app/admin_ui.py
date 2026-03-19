@@ -10,6 +10,9 @@ from .config import AppConfig, save_config
 router = APIRouter()
 ADMIN_ASSETS_PATH = Path(__file__).with_name("admin_assets")
 ADMIN_HTML_PATH = ADMIN_ASSETS_PATH / "admin.html"
+ADMIN_DESTINATION_HTML_PATH = ADMIN_ASSETS_PATH / "admin_destination.html"
+ADMIN_ROUTING_HTML_PATH = ADMIN_ASSETS_PATH / "admin_routing.html"
+ADMIN_CREATE_HTML_PATH = ADMIN_ASSETS_PATH / "admin_create.html"
 
 _get_config: Callable[[], AppConfig] | None = None
 _reload_runtime_config: Callable[[AppConfig], None] | None = None
@@ -44,6 +47,21 @@ def _require_runtime() -> tuple[
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_page():
     return ADMIN_HTML_PATH.read_text(encoding="utf-8")
+
+
+@router.get("/admin/destination", response_class=HTMLResponse)
+async def admin_destination_page():
+    return ADMIN_DESTINATION_HTML_PATH.read_text(encoding="utf-8")
+
+
+@router.get("/admin/routing", response_class=HTMLResponse)
+async def admin_routing_page():
+    return ADMIN_ROUTING_HTML_PATH.read_text(encoding="utf-8")
+
+
+@router.get("/admin/create", response_class=HTMLResponse)
+async def admin_create_page():
+    return ADMIN_CREATE_HTML_PATH.read_text(encoding="utf-8")
 
 
 @router.get("/admin/assets/{asset_name}")
