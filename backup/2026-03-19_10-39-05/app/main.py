@@ -28,8 +28,7 @@ def build_tags(alert: WazuhAlert, owner_group: str, assignment_error: bool) -> l
     alert_tokens = build_alert_match_tokens(alert)
 
     for group in alert.rule.groups:
-        normalized_group = group.strip().lower().replace(" ", "-").replace(",", "-").replace("\"", "")
-        tags.append(f"wazuh_group:{normalized_group}")
+        tags.append(f"wazuh_group:{group}")
 
     for tag_rule in config.tag_rules:
         if any(rule_matches(match, alert_tokens) for match in tag_rule.match_rule_groups):
