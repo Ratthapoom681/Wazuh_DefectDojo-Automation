@@ -1,6 +1,5 @@
 import hashlib
 import json
-from .matching import build_alert_match_tokens, rule_matches
 from .models import WazuhAlert
 
 def map_severity(level: int) -> str:
@@ -10,19 +9,15 @@ def map_severity(level: int) -> str:
     return "Critical"
 
 def generate_dedup_key(alert: WazuhAlert) -> str:
-    host_identity = alert.agent.id or alert.agent.name
-    alert_tokens = build_alert_match_tokens(alert)
-    src_ip = alert.data.get("srcip") if alert.data else None
-    cve = None
-    if alert.data and "vulnerability" in alert.data and "cve" in alert.data["vulnerability"]:
-        cve = alert.data["vulnerability"]["cve"]
-
-    base = f"{alert.rule.id}-{host_identity}"
-
-    if any(rule_matches(match, alert_tokens) for match in ["authentication_failed", "invalid_login", "sshd", "pam"]) and src_ip:
-        base += f"-{src_ip}"
-    elif any(rule_matches(match, alert_tokens) for match in ["vulnerability", "vuln", "syscollector"]) and cve:
-        base += f"-{cve}"
+    # Stable key based on rule, agent, location, and relevant data points
+    base = f"{alert.rule.id}-{alert.agent.id}-{alert.location}"
+    
+    if alert.data:
+        # Add CVE or IP to dedup key if available to separate distinct events under the same rule
+        if "vulnerability" in alert.data and "cve" in alert.data["vulnerability"]:
+            base += f"-{alert.data['vulnerability']['cve']}"
+        elif "srcip" in alert.data:
+            base += f"-{alert.data['srcip']}"
             
     return hashlib.md5(base.encode()).hexdigest()
 
