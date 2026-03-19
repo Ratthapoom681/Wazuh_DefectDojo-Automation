@@ -64,11 +64,10 @@ class DefectDojoClient:
         user = self.get_user(username)
         return bool(user and user.get("is_active", False))
 
-    def ensure_context(self, category: str = "General Monitoring") -> Dict[str, int]:
-        """Ensures a default Product, Engagement, and category-specific Test exist."""
-        cache_key = f"context:{category}"
-        if cache_key in self.context_cache:
-            return self.context_cache[cache_key]
+    def ensure_context(self) -> Dict[str, int]:
+        """Ensures a default Product, Engagement, and Test exist."""
+        if "context" in self.context_cache:
+            return self.context_cache["context"]
 
         # 1. Product Type
         pt_res = self._request("GET", "product_types/?name=Wazuh")
@@ -83,9 +82,8 @@ class DefectDojoClient:
         eng_id = eng_res["results"][0]["id"] if eng_res["count"] > 0 else self._request("POST", "engagements/", json={"name": "Continuous Monitoring", "product": prod_id, "target_start": "2020-01-01", "target_end": "2099-12-31", "status": "In Progress"})["id"]
 
         # 4. Test
-        test_title = f"Wazuh Alerts - {category}"
-        test_res = self._request("GET", f"tests/?engagement={eng_id}&title={quote(test_title)}")
-        test_id = test_res["results"][0]["id"] if test_res["count"] > 0 else self._request("POST", "tests/", json={"title": test_title, "engagement": eng_id, "test_type": 1, "target_start": "2020-01-01", "target_end": "2099-12-31"})["id"]
+        test_res = self._request("GET", f"tests/?engagement={eng_id}&title=Wazuh Alerts Test")
+        test_id = test_res["results"][0]["id"] if test_res["count"] > 0 else self._request("POST", "tests/", json={"title": "Wazuh Alerts Test", "engagement": eng_id, "test_type": 1, "target_start": "2020-01-01", "target_end": "2099-12-31"})["id"]
 
         context = {
             "product_type_id": pt_id,
@@ -93,7 +91,7 @@ class DefectDojoClient:
             "engagement_id": eng_id,
             "test_id": test_id,
         }
-        self.context_cache[cache_key] = context
+        self.context_cache["context"] = context
         return context
 
     def get_finding_by_dedup(self, dedup_key: str) -> Optional[Dict[str, Any]]:

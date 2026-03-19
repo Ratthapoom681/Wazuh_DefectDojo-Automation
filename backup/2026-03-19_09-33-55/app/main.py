@@ -41,14 +41,6 @@ def build_tags(alert: WazuhAlert, owner_group: str, assignment_error: bool) -> l
     return list(dict.fromkeys(tags))
 
 
-def get_finding_group(tags: list[str]) -> str:
-    if "threat-hunting" in tags:
-        return "Threat Hunting"
-    if "vulnerability-detector" in tags:
-        return "Vulnerability Detector"
-    return "General Monitoring"
-
-
 def get_endpoint_host(alert: WazuhAlert) -> str | None:
     if alert.agent.ip:
         return alert.agent.ip
@@ -77,11 +69,9 @@ def process_alert(raw_payload: dict):
     # 2. Routing
     owner_group = determine_owner_group(alert, config)
     group_config = config.teams.get(owner_group)
-    tags = build_tags(alert, owner_group, assignment_error=False)
-    finding_group = get_finding_group(tags)
     
     # 3. Prepare context and determine active users
-    context = dd_client.ensure_context(finding_group)
+    context = dd_client.ensure_context()
     test_id = context["test_id"]
     product_id = context["product_id"]
     dedup_key = generate_dedup_key(alert)
