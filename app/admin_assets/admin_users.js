@@ -50,6 +50,11 @@ async function loadUsers() {
 async function createUser(event) {
   event.preventDefault();
   const formData = Object.fromEntries(new FormData(els.userForm).entries());
+  if (formData.password !== formData.confirm_password) {
+    setStatus("Create user failed: passwords do not match.", true);
+    return;
+  }
+  delete formData.confirm_password;
   try {
     setStatus("Creating user...");
     await fetchJson("/admin/api/dojo/user", {
