@@ -167,13 +167,28 @@ def process_alert(raw_payload: dict):
 
     # 5. Push to DefectDojo
     try:
-        dd_client.push_finding(
+        result = dd_client.push_finding(
             finding_data,
             assign_note,
             existing_finding=existing_finding,
             endpoint_id=endpoint_id,
         )
-        logger.info(f"Processed rule {alert.rule.id} -> DD Finding (Dedup: {dedup_key}) assigned to {assigned_user}")
+        if result["action"] == "deduplicated":
+            logger.info(
+                "Dedup matched existing finding %s for rule %s (Dedup: %s). "
+                "No new finding was sent to DefectDojo; the existing finding was updated instead.",
+                result["finding_id"],
+                alert.rule.id,
+                dedup_key,
+            )
+        else:
+            logger.info(
+                "Processed rule %s -> created DefectDojo finding %s (Dedup: %s) routed to %s",
+                alert.rule.id,
+                result["finding_id"],
+                dedup_key,
+                assigned_user,
+            )
     except Exception as e:
         logger.error(f"Failed to push finding to DefectDojo: {e}")
 

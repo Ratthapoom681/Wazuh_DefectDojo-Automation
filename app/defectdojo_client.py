@@ -239,7 +239,7 @@ class DefectDojoClient:
         assign_note: str,
         existing_finding: Optional[Dict[str, Any]] = None,
         endpoint_id: Optional[int] = None,
-    ):
+    ) -> Dict[str, Any]:
         dedup_key = finding_data["unique_id_from_tool"]
 
         if existing_finding is None:
@@ -273,6 +273,7 @@ class DefectDojoClient:
                 payload.pop("endpoints", None)
                 self._request("PATCH", f"findings/{finding_id}/", json=payload)
             should_add_note = False
+            action = "deduplicated"
         else:
             logger.info("Creating new DefectDojo finding for dedup key %s", dedup_key)
             try:
@@ -287,6 +288,7 @@ class DefectDojoClient:
                 payload.pop("endpoints", None)
                 finding_id = self._request("POST", "findings/", json=payload)["id"]
             should_add_note = True
+            action = "created"
             
         # Add a note regarding assignment using the finding-scoped endpoint.
         if should_add_note:
@@ -294,3 +296,5 @@ class DefectDojoClient:
                 self._request("POST", f"findings/{finding_id}/notes/", json={"entry": assign_note})
             except Exception as e:
                 logger.warning(f"Note attachment variation failed, skipping note: {e}")
+
+        return {"finding_id": finding_id, "action": action}

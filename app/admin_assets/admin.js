@@ -84,6 +84,14 @@ function pretty(value) {
   return JSON.stringify(value, null, 2);
 }
 
+function escapeAttr(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function setStatus(message, isError = false) {
   els.status.textContent = message;
   els.status.className = isError ? "status error" : "status";
@@ -230,8 +238,8 @@ function renderWizard() {
         <input
           name="${field.name}"
           type="${type}"
-          placeholder="${field.placeholder || ""}"
-          value="${String(value).replace(/"/g, "&quot;")}"
+          placeholder="${escapeAttr(field.placeholder || "")}"
+          value="${escapeAttr(value)}"
           ${required}
         />
       </label>
