@@ -1,6 +1,10 @@
 const state = {
   config: null,
   options: null,
+  wizard: {
+    step: 0,
+    data: {},
+  },
 };
 
 const els = {
@@ -24,64 +28,57 @@ const els = {
   routingRules: document.getElementById("routingRules"),
   tagRules: document.getElementById("tagRules"),
   inventory: document.getElementById("inventory"),
-  createPicker: document.getElementById("createPicker"),
-  createForm: document.getElementById("createForm"),
-  createTitle: document.getElementById("createTitle"),
-  createFields: document.getElementById("createFields"),
-  createSubmit: document.getElementById("createSubmit"),
+  wizardForm: document.getElementById("wizardForm"),
+  wizardTitle: document.getElementById("wizardTitle"),
+  wizardFields: document.getElementById("wizardFields"),
+  wizardBack: document.getElementById("wizardBack"),
+  wizardNext: document.getElementById("wizardNext"),
+  wizardFinish: document.getElementById("wizardFinish"),
+  wizardSteps: Array.from(document.querySelectorAll(".wizard-step")),
 };
 
-const createSchemas = {
-  "product-type": {
-    title: "New Product Type",
-    submit: "Create Product Type",
+const wizardSchemas = [
+  {
+    key: "product-type",
+    title: "Step 1: Product Type",
+    nextLabel: "Next: Product",
     fields: [
-      { name: "name", placeholder: "Infrastructure", required: true },
-      { name: "description", placeholder: "Description" },
+      { name: "name", label: "Product Type Name", placeholder: "Wazuh", required: true },
+      { name: "description", label: "Product Type Description", placeholder: "Security Operations" },
     ],
   },
-  product: {
-    title: "New Product",
-    submit: "Create Product",
+  {
+    key: "product",
+    title: "Step 2: Product",
+    nextLabel: "Next: Engagement",
     fields: [
-      { name: "name", placeholder: "Wazuh Endpoint Security", required: true },
-      { name: "description", placeholder: "Description", required: true },
-      { name: "prod_type", type: "number", placeholder: "Product Type ID", required: true },
+      { name: "name", label: "Product Name", placeholder: "Wazuh Endpoint Security", required: true },
+      { name: "description", label: "Product Description", placeholder: "Continuous endpoint monitoring", required: true },
     ],
   },
-  engagement: {
-    title: "New Engagement",
-    submit: "Create Engagement",
+  {
+    key: "engagement",
+    title: "Step 3: Engagement",
+    nextLabel: "Next: Test",
     fields: [
-      { name: "name", placeholder: "Continuous Monitoring" },
-      { name: "product", type: "number", placeholder: "Product ID", required: true },
-      { name: "target_start", placeholder: "2026-03-19", required: true },
-      { name: "target_end", placeholder: "2027-03-19", required: true },
-      { name: "status", placeholder: "In Progress" },
+      { name: "name", label: "Engagement Name", placeholder: "Continuous Monitoring", required: true },
+      { name: "status", label: "Engagement Status", placeholder: "In Progress", required: true },
+      { name: "target_start", label: "Target Start", placeholder: "2026-03-19", required: true },
+      { name: "target_end", label: "Target End", placeholder: "2027-03-19", required: true },
     ],
   },
-  test: {
-    title: "New Test",
-    submit: "Create Test",
+  {
+    key: "test",
+    title: "Step 4: Test",
+    finishLabel: "Create Path",
     fields: [
-      { name: "title", placeholder: "Threat Hunting" },
-      { name: "engagement", type: "number", placeholder: "Engagement ID", required: true },
-      { name: "test_type", type: "number", placeholder: "Test Type ID", required: true },
-      { name: "target_start", placeholder: "2026-03-19T00:00:00Z", required: true },
-      { name: "target_end", placeholder: "2027-03-19T00:00:00Z", required: true },
+      { name: "title", label: "Test Title", placeholder: "Wazuh Alerts - Threat Hunting", required: true },
+      { name: "test_type", label: "Test Type ID", type: "number", placeholder: "1", required: true },
+      { name: "target_start", label: "Test Start", placeholder: "2026-03-19T00:00:00Z", required: true },
+      { name: "target_end", label: "Test End", placeholder: "2027-03-19T00:00:00Z", required: true },
     ],
   },
-  user: {
-    title: "New User",
-    submit: "Create User",
-    fields: [
-      { name: "username", placeholder: "WindowsTest1", required: true },
-      { name: "email", placeholder: "windows@example.com", required: true },
-      { name: "first_name", placeholder: "First name" },
-      { name: "last_name", placeholder: "Last name" },
-    ],
-  },
-};
+];
 
 function pretty(value) {
   return JSON.stringify(value, null, 2);
@@ -187,6 +184,147 @@ async function fetchJson(url, options = {}) {
   return data;
 }
 
+function wizardDefaults() {
+  return {
+    "product-type": {
+      name: els.productTypeSelect.value || state.config?.defectdojo?.product_type?.name || "",
+      description: els.productTypeDescription.value || state.config?.defectdojo?.product_type?.description || "",
+    },
+    product: {
+      name: els.productSelect.value || state.config?.defectdojo?.product?.name || "",
+      description: els.productDescription.value || state.config?.defectdojo?.product?.description || "",
+    },
+    engagement: {
+      name: els.engagementSelect.value || state.config?.defectdojo?.engagement?.name || "",
+      status: els.engagementStatus.value || state.config?.defectdojo?.engagement?.status || "In Progress",
+      target_start: els.engagementStart.value || state.config?.defectdojo?.engagement?.target_start || "",
+      target_end: els.engagementEnd.value || state.config?.defectdojo?.engagement?.target_end || "",
+    },
+    test: {
+      title: `${els.testTitlePrefix.value || state.config?.defectdojo?.test?.title_prefix || "Wazuh Alerts"} - ${els.threatHuntingTest.value || "Threat Hunting"}`,
+      test_type: String(els.testTypeId.value || state.config?.defectdojo?.test?.test_type_id || 1),
+      target_start: state.config?.defectdojo?.test?.target_start || "",
+      target_end: state.config?.defectdojo?.test?.target_end || "",
+    },
+  };
+}
+
+function resetWizard() {
+  state.wizard.step = 0;
+  state.wizard.data = wizardDefaults();
+  renderWizard();
+}
+
+function renderWizard() {
+  const schema = wizardSchemas[state.wizard.step];
+  const stepData = state.wizard.data[schema.key] || {};
+
+  els.wizardTitle.textContent = schema.title;
+  els.wizardFields.innerHTML = schema.fields.map((field) => {
+    const type = field.type || "text";
+    const required = field.required ? "required" : "";
+    const value = stepData[field.name] ?? "";
+    return `
+      <label class="field">
+        <span>${field.label}</span>
+        <input
+          name="${field.name}"
+          type="${type}"
+          placeholder="${field.placeholder || ""}"
+          value="${String(value).replace(/"/g, "&quot;")}"
+          ${required}
+        />
+      </label>
+    `;
+  }).join("");
+
+  els.wizardSteps.forEach((stepEl, index) => {
+    stepEl.classList.toggle("active", index === state.wizard.step);
+    stepEl.classList.toggle("complete", index < state.wizard.step);
+  });
+
+  els.wizardBack.hidden = state.wizard.step === 0;
+  els.wizardNext.hidden = state.wizard.step === wizardSchemas.length - 1;
+  els.wizardFinish.hidden = state.wizard.step !== wizardSchemas.length - 1;
+  els.wizardNext.textContent = schema.nextLabel || "Next";
+  els.wizardFinish.textContent = schema.finishLabel || "Create Path";
+}
+
+function persistWizardStep() {
+  const schema = wizardSchemas[state.wizard.step];
+  const inputs = Array.from(els.wizardFields.querySelectorAll("input"));
+  const invalid = inputs.find((input) => !input.checkValidity());
+  if (invalid) {
+    invalid.reportValidity();
+    return false;
+  }
+
+  const formData = Object.fromEntries(new FormData(els.wizardForm).entries());
+  state.wizard.data[schema.key] = {
+    ...(state.wizard.data[schema.key] || {}),
+    ...formData,
+  };
+  return true;
+}
+
+function normalizeObjectPayload(objectType, payload) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === "") continue;
+    if (["prod_type", "product", "engagement", "test_type"].includes(key)) {
+      normalized[key] = Number(value);
+    } else {
+      normalized[key] = value;
+    }
+  }
+
+  if (objectType === "product-type") {
+    delete normalized.prod_type;
+  }
+
+  return normalized;
+}
+
+function moveWizard(direction) {
+  if (!persistWizardStep()) return;
+  const nextStep = state.wizard.step + direction;
+  if (nextStep < 0 || nextStep >= wizardSchemas.length) return;
+  state.wizard.step = nextStep;
+  renderWizard();
+}
+
+function updateDestinationPathFromCreated(created) {
+  const { productType, product, engagement, test } = created;
+  if (productType?.name) {
+    els.productTypeDescription.value = productType.description || "";
+  }
+  if (product?.name) {
+    els.productDescription.value = product.description || "";
+  }
+  if (engagement?.name) {
+    els.engagementStatus.value = engagement.status || "";
+    els.engagementStart.value = engagement.target_start || "";
+    els.engagementEnd.value = engagement.target_end || "";
+  }
+  if (test?.test_type) {
+    els.testTypeId.value = test.test_type;
+  }
+
+  state.config.defectdojo.product_type.name = productType?.name || state.config.defectdojo.product_type.name;
+  state.config.defectdojo.product_type.description = productType?.description || state.config.defectdojo.product_type.description;
+  state.config.defectdojo.product.name = product?.name || state.config.defectdojo.product.name;
+  state.config.defectdojo.product.description = product?.description || state.config.defectdojo.product.description;
+  state.config.defectdojo.engagement.name = engagement?.name || state.config.defectdojo.engagement.name;
+  state.config.defectdojo.engagement.status = engagement?.status || state.config.defectdojo.engagement.status;
+  state.config.defectdojo.engagement.target_start = engagement?.target_start || state.config.defectdojo.engagement.target_start;
+  state.config.defectdojo.engagement.target_end = engagement?.target_end || state.config.defectdojo.engagement.target_end;
+  state.config.defectdojo.test.test_type_id = Number(test?.test_type || state.config.defectdojo.test.test_type_id);
+
+  populateSelect(els.productTypeSelect, state.options.product_types || [], state.config.defectdojo.product_type.name);
+  populateSelect(els.productSelect, state.options.products || [], state.config.defectdojo.product.name);
+  populateSelect(els.engagementSelect, state.options.engagements || [], state.config.defectdojo.engagement.name);
+}
+
 async function loadAll() {
   setStatus("Loading...");
   try {
@@ -198,48 +336,11 @@ async function loadAll() {
     state.options = options;
     applyConfig();
     syncSelectedObjectDetails();
-    hydrateCreateForms();
+    resetWizard();
     setStatus("Config and live DefectDojo lists loaded.");
   } catch (error) {
     setStatus(`Failed to load admin data: ${error}`, true);
   }
-}
-
-function hydrateCreateForms() {
-  const objectType = els.createForm.dataset.objectType || "product-type";
-  const productTypeId = state.options.product_types?.find((item) => item.name === els.productTypeSelect.value)?.id;
-  const productId = state.options.products?.find((item) => item.name === els.productSelect.value)?.id;
-  const engagementId = state.options.engagements?.find((item) => item.name === els.engagementSelect.value)?.id;
-
-  const valueMap = {
-    prod_type: productTypeId || "",
-    product: productId || "",
-    engagement: engagementId || "",
-    test_type: els.testTypeId.value || 1,
-  };
-
-  for (const [name, value] of Object.entries(valueMap)) {
-    const input = els.createForm.querySelector(`[name="${name}"]`);
-    if (input && (objectType !== "user")) {
-      input.value = value;
-    }
-  }
-}
-
-function renderCreateForm(objectType) {
-  const schema = createSchemas[objectType];
-  els.createForm.dataset.objectType = objectType;
-  els.createTitle.textContent = schema.title;
-  els.createSubmit.textContent = schema.submit;
-  els.createFields.innerHTML = schema.fields.map((field) => {
-    const type = field.type || "text";
-    const required = field.required ? "required" : "";
-    return `<input name="${field.name}" type="${type}" placeholder="${field.placeholder}" ${required} />`;
-  }).join("");
-  document.querySelectorAll(".create-choice").forEach((button) => {
-    button.classList.toggle("active", button.dataset.objectType === objectType);
-  });
-  hydrateCreateForms();
 }
 
 async function saveConfig() {
@@ -293,50 +394,64 @@ async function saveConfig() {
   }
 }
 
-function normalizeFormPayload(form) {
-  const raw = Object.fromEntries(new FormData(form).entries());
-  const payload = {};
-  for (const [key, value] of Object.entries(raw)) {
-    if (value === "") continue;
-    if (["prod_type", "product", "engagement", "test_type"].includes(key)) {
-      payload[key] = Number(value);
-    } else {
-      payload[key] = value;
-    }
-  }
-  return payload;
-}
-
-async function handleCreateForm(event) {
+async function createWizardPath(event) {
   event.preventDefault();
-  const form = event.currentTarget;
-  const objectType = form.dataset.objectType;
+  if (!persistWizardStep()) return;
+
+  const wizardData = state.wizard.data;
+  const productTypePayload = normalizeObjectPayload("product-type", wizardData["product-type"] || {});
+  const productPayload = normalizeObjectPayload("product", wizardData.product || {});
+  const engagementPayload = normalizeObjectPayload("engagement", wizardData.engagement || {});
+  const testPayload = normalizeObjectPayload("test", wizardData.test || {});
+
   try {
-    setStatus(`Creating ${objectType}...`);
-    const payload = normalizeFormPayload(form);
-    await fetchJson(`/admin/api/dojo/${objectType}`, {
+    setStatus("Creating Product Type -> Product -> Engagement -> Test...");
+    const productType = await fetchJson("/admin/api/dojo/product-type", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(productTypePayload),
     });
-    form.reset();
-    setStatus(`Created ${objectType}.`);
+    const product = await fetchJson("/admin/api/dojo/product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...productPayload,
+        prod_type: productType.id,
+      }),
+    });
+    const engagement = await fetchJson("/admin/api/dojo/engagement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...engagementPayload,
+        product: product.id,
+      }),
+    });
+    const test = await fetchJson("/admin/api/dojo/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...testPayload,
+        engagement: engagement.id,
+      }),
+    });
+
     await loadAll();
+    updateDestinationPathFromCreated({ productType, product, engagement, test });
+    resetWizard();
+    setStatus("Path created. Save Config if you want alerts to route to this new destination.");
   } catch (error) {
-    setStatus(`Create failed: ${error}`, true);
+    setStatus(`Create path failed: ${error}`, true);
   }
 }
 
-els.createForm.addEventListener("submit", handleCreateForm);
-document.querySelectorAll(".create-choice").forEach((button) => {
-  button.addEventListener("click", () => renderCreateForm(button.dataset.objectType));
-});
+els.wizardForm.addEventListener("submit", createWizardPath);
+els.wizardBack.addEventListener("click", () => moveWizard(-1));
+els.wizardNext.addEventListener("click", () => moveWizard(1));
 els.reloadBtn.addEventListener("click", loadAll);
 els.saveBtn.addEventListener("click", saveConfig);
-els.productTypeSelect.addEventListener("change", () => { syncSelectedObjectDetails(); hydrateCreateForms(); });
-els.productSelect.addEventListener("change", () => { syncSelectedObjectDetails(); hydrateCreateForms(); });
-els.engagementSelect.addEventListener("change", () => { syncSelectedObjectDetails(); hydrateCreateForms(); });
-els.testTypeId.addEventListener("change", hydrateCreateForms);
+els.productTypeSelect.addEventListener("change", syncSelectedObjectDetails);
+els.productSelect.addEventListener("change", syncSelectedObjectDetails);
+els.engagementSelect.addEventListener("change", syncSelectedObjectDetails);
 
-renderCreateForm("product-type");
 loadAll();

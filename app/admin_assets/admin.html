@@ -106,17 +106,20 @@
 
       <section class="panel">
         <h2>Create DefectDojo Objects</h2>
-        <div class="create-picker" id="createPicker">
-          <button class="ghost create-choice active" data-object-type="product-type" type="button">Product Type</button>
-          <button class="ghost create-choice" data-object-type="product" type="button">Product</button>
-          <button class="ghost create-choice" data-object-type="engagement" type="button">Engagement</button>
-          <button class="ghost create-choice" data-object-type="test" type="button">Test</button>
-          <button class="ghost create-choice" data-object-type="user" type="button">User</button>
+        <div class="wizard-steps" id="wizardSteps">
+          <span class="wizard-step active">1. Product Type</span>
+          <span class="wizard-step">2. Product</span>
+          <span class="wizard-step">3. Engagement</span>
+          <span class="wizard-step">4. Test</span>
         </div>
-        <form class="create-card" id="createForm">
-          <h3 id="createTitle">New Product Type</h3>
-          <div class="create-fields" id="createFields"></div>
-          <button class="primary" type="submit" id="createSubmit">Create</button>
+        <form class="create-card" id="wizardForm">
+          <h3 id="wizardTitle">Step 1: Product Type</h3>
+          <div class="create-fields" id="wizardFields"></div>
+          <div class="wizard-actions">
+            <button class="ghost" type="button" id="wizardBack">Back</button>
+            <button class="ghost" type="button" id="wizardNext">Next</button>
+            <button class="primary" type="submit" id="wizardFinish">Create Path</button>
+          </div>
         </form>
       </section>
     </div>

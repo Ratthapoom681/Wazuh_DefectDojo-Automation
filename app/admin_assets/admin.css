@@ -180,22 +180,56 @@ button {
   margin: 0;
 }
 
-.create-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.create-choice.active {
-  background: var(--accent);
-  color: white;
-}
-
 .create-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.wizard-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.wizard-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.wizard-step.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #134e4a;
+  font-weight: 600;
+}
+
+.wizard-step.complete {
+  border-color: #99f6e4;
+  background: #ecfeff;
+  color: #155e75;
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.wizard-actions .primary,
+.wizard-actions .ghost {
+  min-width: 120px;
 }
 
 .error {
@@ -213,7 +247,12 @@ button {
   .form-grid,
   .category-grid,
   .create-grid,
-  .create-fields {
+  .create-fields,
+  .wizard-steps {
     grid-template-columns: 1fr;
+  }
+
+  .wizard-actions {
+    flex-direction: column;
   }
 }
