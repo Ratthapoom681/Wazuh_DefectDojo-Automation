@@ -85,17 +85,43 @@
         </div>
 
         <h3>Routing and Teams</h3>
-        <div class="field">
-          <label for="teams">Teams (JSON)</label>
-          <textarea id="teams"></textarea>
-        </div>
-        <div class="field">
-          <label for="routingRules">Routing Rules (JSON)</label>
-          <textarea id="routingRules"></textarea>
-        </div>
-        <div class="field">
-          <label for="tagRules">Tag Rules (JSON)</label>
-          <textarea id="tagRules"></textarea>
+        <div class="editor-stack">
+          <div class="editor-group">
+            <div class="editor-head">
+              <div>
+                <h4>Teams</h4>
+                <p>Set the team name, assigned users, and fallback user.</p>
+              </div>
+              <button class="ghost" type="button" id="addTeamBtn">Add Team</button>
+            </div>
+            <div class="field">
+              <label for="defaultOwnerGroup">Default Owner Group</label>
+              <select id="defaultOwnerGroup"></select>
+            </div>
+            <div class="editor-list" id="teamsEditor"></div>
+          </div>
+
+          <div class="editor-group">
+            <div class="editor-head">
+              <div>
+                <h4>Routing Rules</h4>
+                <p>Map Wazuh rule groups to the team that should own the finding.</p>
+              </div>
+              <button class="ghost" type="button" id="addRoutingRuleBtn">Add Rule</button>
+            </div>
+            <div class="editor-list" id="routingRulesEditor"></div>
+          </div>
+
+          <div class="editor-group">
+            <div class="editor-head">
+              <div>
+                <h4>Tag Rules</h4>
+                <p>Apply extra tags when alerts match these Wazuh rule groups.</p>
+              </div>
+              <button class="ghost" type="button" id="addTagRuleBtn">Add Tag Rule</button>
+            </div>
+            <div class="editor-list" id="tagRulesEditor"></div>
+          </div>
         </div>
       </section>
 

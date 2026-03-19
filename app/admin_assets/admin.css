@@ -96,6 +96,11 @@ body {
   grid-column: 1 / -1;
 }
 
+.field span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
 label {
   font-size: 14px;
   color: var(--muted);
@@ -232,6 +237,79 @@ button {
   min-width: 120px;
 }
 
+.editor-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.editor-group {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+}
+
+.editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.editor-head h4 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.editor-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.editor-list {
+  display: grid;
+  gap: 12px;
+}
+
+.editor-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.editor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.editor-card-title {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.editor-grid .full {
+  grid-column: 1 / -1;
+}
+
+.helper {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .error {
   color: var(--danger);
 }
@@ -248,11 +326,18 @@ button {
   .category-grid,
   .create-grid,
   .create-fields,
-  .wizard-steps {
+  .wizard-steps,
+  .editor-grid {
     grid-template-columns: 1fr;
   }
 
   .wizard-actions {
     flex-direction: column;
+  }
+
+  .editor-head,
+  .editor-card-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
