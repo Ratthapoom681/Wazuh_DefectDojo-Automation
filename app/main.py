@@ -183,7 +183,7 @@ def process_alert(raw_payload: dict):
             )
         else:
             logger.info(
-                "Processed rule %s -> created DefectDojo finding %s (Dedup: %s) routed to %s",
+                "Alert for rule %s was sent to DefectDojo as new finding %s (Dedup: %s) and routed to %s",
                 alert.rule.id,
                 result["finding_id"],
                 dedup_key,
