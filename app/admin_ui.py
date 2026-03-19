@@ -13,6 +13,7 @@ ADMIN_HTML_PATH = ADMIN_ASSETS_PATH / "admin.html"
 ADMIN_DESTINATION_HTML_PATH = ADMIN_ASSETS_PATH / "admin_destination.html"
 ADMIN_ROUTING_HTML_PATH = ADMIN_ASSETS_PATH / "admin_routing.html"
 ADMIN_CREATE_HTML_PATH = ADMIN_ASSETS_PATH / "admin_create.html"
+ADMIN_USERS_HTML_PATH = ADMIN_ASSETS_PATH / "admin_users.html"
 
 _get_config: Callable[[], AppConfig] | None = None
 _reload_runtime_config: Callable[[AppConfig], None] | None = None
@@ -62,6 +63,11 @@ async def admin_routing_page():
 @router.get("/admin/create", response_class=HTMLResponse)
 async def admin_create_page():
     return ADMIN_CREATE_HTML_PATH.read_text(encoding="utf-8")
+
+
+@router.get("/admin/users", response_class=HTMLResponse)
+async def admin_users_page():
+    return ADMIN_USERS_HTML_PATH.read_text(encoding="utf-8")
 
 
 @router.get("/admin/assets/{asset_name}")
