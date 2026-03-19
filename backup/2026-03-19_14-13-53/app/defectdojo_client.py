@@ -93,18 +93,6 @@ class DefectDojoClient:
             "users": self._list_all("users/?limit=200"),
         }
 
-    def create_admin_object(self, object_type: str, payload: dict[str, Any]) -> dict[str, Any]:
-        creators = {
-            "product-type": lambda: self._request("POST", "product_types/", json=payload),
-            "product": lambda: self._request("POST", "products/", json=payload),
-            "engagement": lambda: self._request("POST", "engagements/", json=payload),
-            "test": lambda: self._request("POST", "tests/", json=payload),
-            "user": lambda: self._request("POST", "users/", json=payload),
-        }
-        if object_type not in creators:
-            raise ValueError(f"Unsupported DefectDojo object type: {object_type}")
-        return creators[object_type]()
-
     def ensure_context(self, category: str = "General Monitoring") -> Dict[str, int]:
         """Ensures a default Product, Engagement, and category-specific Test exist."""
         cache_key = f"context:{category}"

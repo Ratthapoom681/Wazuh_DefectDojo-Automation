@@ -30,12 +30,7 @@ def reload_runtime_config(new_config: AppConfig) -> None:
     dd_client = DefectDojoClient(DOJO_URL, DOJO_API_KEY, config.defectdojo)
 
 
-configure_admin(
-    lambda: config,
-    reload_runtime_config,
-    lambda: dd_client.get_admin_options(),
-    lambda object_type, payload: dd_client.create_admin_object(object_type, payload),
-)
+configure_admin(lambda: config, reload_runtime_config, lambda: dd_client.get_admin_options())
 app.include_router(admin_router)
 
 

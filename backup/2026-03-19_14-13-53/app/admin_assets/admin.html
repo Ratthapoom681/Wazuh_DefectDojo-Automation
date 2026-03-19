@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wazuh to DefectDojo Admin</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: #fffaf2;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --accent: #0f766e;
+      --border: #d6d3d1;
+    }
+    body { margin: 0; font-family: Georgia, "Times New Roman", serif; background: linear-gradient(180deg, #f7f3eb, #efe7da); color: var(--ink); }
+    .shell { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .hero { margin-bottom: 20px; }
+    .hero h1 { margin: 0 0 8px; font-size: 36px; }
+    .hero p { margin: 0; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    .card h2 { margin-top: 0; font-size: 22px; }
+    label { display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted); }
+    input, textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); font: inherit; background: white; }
+    textarea { min-height: 120px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .stack { display: grid; gap: 12px; }
+    .actions { display: flex; gap: 10px; margin-top: 16px; }
+    button { border: 0; border-radius: 999px; padding: 10px 16px; font: inherit; cursor: pointer; }
+    .primary { background: var(--accent); color: white; }
+    .ghost { background: #e7e5e4; color: var(--ink); }
+    .status { margin-top: 12px; font-size: 14px; color: var(--muted); min-height: 20px; }
+    .list { max-height: 700px; overflow: auto; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .list h3 { margin: 16px 0 8px; font-size: 16px; }
+    .list h3:first-child { margin-top: 0; }
+    .pill { display: inline-block; margin: 4px 6px 0 0; padding: 4px 8px; border-radius: 999px; background: #ecfeff; color: #155e75; font-size: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <h1>Wazuh to DefectDojo Admin</h1>
+      <p>Edit local integration config and compare it against live DefectDojo objects.</p>
+    </div>
+    <div class="grid">
+      <section class="card">
+        <h2>Config</h2>
+        <div class="stack">
+          <div class="row">
+            <div><label>Product Type</label><input id="productTypeName" /></div>
+            <div><label>Product Type Description</label><input id="productTypeDescription" /></div>
+          </div>
+          <div class="row">
+            <div><label>Product</label><input id="productName" /></div>
+            <div><label>Product Description</label><input id="productDescription" /></div>
+          </div>
+          <div class="row">
+            <div><label>Engagement</label><input id="engagementName" /></div>
+            <div><label>Engagement Status</label><input id="engagementStatus" /></div>
+          </div>
+          <div class="row">
+            <div><label>Engagement Start</label><input id="engagementStart" /></div>
+            <div><label>Engagement End</label><input id="engagementEnd" /></div>
+          </div>
+          <div class="row">
+            <div><label>Test Title Prefix</label><input id="testTitlePrefix" /></div>
+            <div><label>Test Type ID</label><input id="testTypeId" type="number" /></div>
+          </div>
+          <div class="row">
+            <div><label>Default Test Category</label><input id="defaultTest" /></div>
+            <div><label>Tag to Test Mapping (JSON)</label><textarea id="tagToTest"></textarea></div>
+          </div>
+          <div>
+            <label>Teams (JSON)</label>
+            <textarea id="teams"></textarea>
+          </div>
+          <div>
+            <label>Routing Rules (JSON)</label>
+            <textarea id="routingRules"></textarea>
+          </div>
+          <div>
+            <label>Tag Rules (JSON)</label>
+            <textarea id="tagRules"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" onclick="saveConfig()">Save Config</button>
+          <button class="ghost" onclick="loadAll()">Reload</button>
+        </div>
+        <div class="status" id="status"></div>
+      </section>
+      <aside class="card">
+        <h2>Live DefectDojo Lists</h2>
+        <div class="list" id="dojoLists">Loading...</div>
+      </aside>
+    </div>
+  </div>
+  <script>
+    function pretty(value) {
+      return JSON.stringify(value, null, 2);
+    }
+    async function loadConfig() {
+      const res = await fetch('/admin/api/config');
+      const cfg = await res.json();
+      productTypeName.value = cfg.defectdojo.product_type.name;
+      productTypeDescription.value = cfg.defectdojo.product_type.description || '';
+      productName.value = cfg.defectdojo.product.name;
+      productDescription.value = cfg.defectdojo.product.description || '';
+      engagementName.value = cfg.defectdojo.engagement.name;
+      engagementStatus.value = cfg.defectdojo.engagement.status;
+      engagementStart.value = cfg.defectdojo.engagement.target_start;
+      engagementEnd.value = cfg.defectdojo.engagement.target_end;
+      testTitlePrefix.value = cfg.defectdojo.test.title_prefix;
+      testTypeId.value = cfg.defectdojo.test.test_type_id;
+      defaultTest.value = cfg.categories.default_test;
+      tagToTest.value = pretty(cfg.categories.tag_to_test || {});
+      teams.value = pretty(cfg.teams || {});
+      routingRules.value = pretty(cfg.routing_rules || []);
+      tagRules.value = pretty(cfg.tag_rules || []);
+    }
+    function renderList(title, items, labelKey='name') {
+      const lines = [`<h3>${title}</h3>`];
+      if (!items.length) {
+        lines.push('<div class="pill">None</div>');
+        return lines.join('');
+      }
+      for (const item of items) {
+        const label = item[labelKey] || item.name || item.username || item.id;
+        lines.push(`<div class="pill">${label}</div>`);
+      }
+      return lines.join('');
+    }
+    async function loadDojo() {
+      const res = await fetch('/admin/api/dojo-options');
+      const data = await res.json();
+      dojoLists.innerHTML = [
+        renderList('Product Types', data.product_types || []),
+        renderList('Products', data.products || []),
+        renderList('Engagements', data.engagements || []),
+        renderList('Tests', data.tests || []),
+        renderList('Users', data.users || [], 'username')
+      ].join('');
+    }
+    async function loadAll() {
+      status.textContent = 'Loading...';
+      try {
+        await Promise.all([loadConfig(), loadDojo()]);
+        status.textContent = 'Config and live lists loaded.';
+      } catch (err) {
+        status.textContent = 'Failed to load admin data: ' + err;
+      }
+    }
+    async function saveConfig() {
+      status.textContent = 'Saving...';
+      try {
+        const payload = {
+          defectdojo: {
+            product_type: { name: productTypeName.value, description: productTypeDescription.value },
+            product: { name: productName.value, description: productDescription.value },
+            engagement: {
+              name: engagementName.value,
+              status: engagementStatus.value,
+              target_start: engagementStart.value,
+              target_end: engagementEnd.value
+            },
+            test: {
+              title_prefix: testTitlePrefix.value,
+              test_type_id: Number(testTypeId.value),
+              target_start: engagementStart.value,
+              target_end: engagementEnd.value
+            }
+          },
+          categories: {
+            default_test: defaultTest.value,
+            tag_to_test: JSON.parse(tagToTest.value || '{}')
+          },
+          teams: JSON.parse(teams.value || '{}'),
+          routing_rules: JSON.parse(routingRules.value || '[]'),
+          tag_rules: JSON.parse(tagRules.value || '[]'),
+          default_owner_group: Object.keys(JSON.parse(teams.value || '{}'))[0] || 'SecOps'
+        };
+        const res = await fetch('/admin/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+        status.textContent = 'Config saved.';
+      } catch (err) {
+        status.textContent = 'Save failed: ' + err;
+      }
+    }
+    loadAll();
+  </script>
+</body>
+</html>
