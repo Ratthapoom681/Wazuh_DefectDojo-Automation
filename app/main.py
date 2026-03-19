@@ -5,6 +5,7 @@ from .config import AppConfig, load_config, DOJO_URL, DOJO_API_KEY
 from .matching import build_alert_match_tokens, rule_matches
 from .models import WazuhAlert
 from .wazuh_parser import (
+    extract_cwe,
     generate_dedup_key,
     generate_impact,
     generate_markdown_description,
@@ -152,6 +153,10 @@ def process_alert(raw_payload: dict):
         "found_by": [DEFAULT_FOUND_BY_TEST_TYPE_ID],
         "unique_id_from_tool": dedup_key
     }
+
+    cwe = extract_cwe(alert)
+    if cwe:
+        finding_data["cwe"] = cwe
     
     # DefectDojo uses reviewers as the assigned-user field.
     if assigned_user_id:
@@ -183,7 +188,7 @@ def process_alert(raw_payload: dict):
             )
         else:
             logger.info(
-                "Processed rule %s -> created DefectDojo finding %s (Dedup: %s) routed to %s",
+                "Alert for rule %s was sent to DefectDojo as new finding %s (Dedup: %s) and routed to %s",
                 alert.rule.id,
                 result["finding_id"],
                 dedup_key,

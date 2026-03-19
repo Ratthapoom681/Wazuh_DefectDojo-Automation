@@ -26,6 +26,46 @@ def generate_dedup_key(alert: WazuhAlert) -> str:
             
     return hashlib.md5(base.encode()).hexdigest()
 
+def extract_cwe(alert: WazuhAlert) -> int | None:
+    candidates = []
+
+    if alert.data:
+        candidates.extend([
+            alert.data.get("cwe"),
+            alert.data.get("cwe_id"),
+            alert.data.get("weakness"),
+        ])
+        vulnerability = alert.data.get("vulnerability")
+        if isinstance(vulnerability, dict):
+            candidates.extend([
+                vulnerability.get("cwe"),
+                vulnerability.get("cwe_id"),
+                vulnerability.get("weakness"),
+            ])
+
+    raw_vulnerability = alert.raw_payload.get("vulnerability") if isinstance(alert.raw_payload, dict) else None
+    if isinstance(raw_vulnerability, dict):
+        candidates.extend([
+            raw_vulnerability.get("cwe"),
+            raw_vulnerability.get("cwe_id"),
+            raw_vulnerability.get("weakness"),
+        ])
+
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        digits = "".join(char for char in str(candidate) if char.isdigit())
+        if digits:
+            return int(digits)
+
+    groups = {group.lower() for group in alert.rule.groups}
+    if "vulnerability" in groups or "vuln" in groups or "syscollector" in groups:
+        return 1104
+    if "authentication_failed" in groups or "invalid_login" in groups or "sshd" in groups or "pam" in groups:
+        return 307
+
+    return None
+
 def generate_markdown_description(alert: WazuhAlert) -> str:
     desc = f"### Wazuh Alert Summary\n\n"
     desc += f"**Description:** {alert.rule.description}\n"
@@ -35,7 +75,11 @@ def generate_markdown_description(alert: WazuhAlert) -> str:
     
     if alert.full_log:
         desc += f"**Full Log:**\n```text\n{alert.full_log}\n```\n\n"
-        
+
+    cwe = extract_cwe(alert)
+    if cwe:
+        desc += f"**CWE:** CWE-{cwe}\n\n"
+
     desc += f"**Raw JSON Payload:**\n```json\n{json.dumps(alert.raw_payload, indent=2)}\n```\n"
     return desc
 
