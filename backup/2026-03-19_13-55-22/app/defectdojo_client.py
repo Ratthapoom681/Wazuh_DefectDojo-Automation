@@ -66,33 +66,6 @@ class DefectDojoClient:
         user = self.get_user(username)
         return bool(user and user.get("is_active", False))
 
-    def _list_all(self, endpoint: str) -> list[Dict[str, Any]]:
-        results: list[Dict[str, Any]] = []
-        next_endpoint = endpoint
-
-        while next_endpoint:
-            response = self._request("GET", next_endpoint)
-            if isinstance(response, dict) and "results" in response:
-                results.extend(response.get("results", []))
-                next_url = response.get("next")
-                if next_url and "/api/v2/" in next_url:
-                    next_endpoint = next_url.split("/api/v2/", 1)[1]
-                else:
-                    next_endpoint = None
-            else:
-                break
-
-        return results
-
-    def get_admin_options(self) -> Dict[str, list[Dict[str, Any]]]:
-        return {
-            "product_types": self._list_all("product_types/?limit=200"),
-            "products": self._list_all("products/?limit=200"),
-            "engagements": self._list_all("engagements/?limit=200"),
-            "tests": self._list_all("tests/?limit=200"),
-            "users": self._list_all("users/?limit=200"),
-        }
-
     def ensure_context(self, category: str = "General Monitoring") -> Dict[str, int]:
         """Ensures a default Product, Engagement, and category-specific Test exist."""
         cache_key = f"context:{category}"

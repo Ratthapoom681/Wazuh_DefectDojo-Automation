@@ -54,10 +54,6 @@ def load_config(path: str = "config.yaml") -> AppConfig:
         data = yaml.safe_load(f)
     return AppConfig(**data)
 
-def save_config(config: AppConfig, path: str = "config.yaml") -> None:
-    with open(path, "w") as f:
-        yaml.safe_dump(config.model_dump(mode="python"), f, sort_keys=False)
-
 DOJO_URL = os.getenv("DEFECTDOJO_URL", "http://localhost:8080").rstrip('/')
 DOJO_API_KEY = os.getenv("DEFECTDOJO_API_KEY", "")
 DB_PATH = os.getenv("ASSIGNMENT_DB_PATH", "assignments.sqlite")

@@ -1,7 +1,6 @@
 import logging
 from fastapi import FastAPI, Request, BackgroundTasks
-from .admin_ui import configure_admin, router as admin_router
-from .config import AppConfig, load_config, DOJO_URL, DOJO_API_KEY
+from .config import load_config, DOJO_URL, DOJO_API_KEY
 from .matching import build_alert_match_tokens, rule_matches
 from .models import WazuhAlert
 from .wazuh_parser import (
@@ -20,18 +19,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Wazuh to DefectDojo Integrator")
 config = load_config()
-dd_client = DefectDojoClient(DOJO_URL, DOJO_API_KEY, config.defectdojo)
+dd_client = DefectDojoClient(DOJO_URL, DOJO_API_KEY)
 DEFAULT_FOUND_BY_TEST_TYPE_ID = 1
-
-
-def reload_runtime_config(new_config: AppConfig) -> None:
-    global config, dd_client
-    config = new_config
-    dd_client = DefectDojoClient(DOJO_URL, DOJO_API_KEY, config.defectdojo)
-
-
-configure_admin(lambda: config, reload_runtime_config, lambda: dd_client.get_admin_options())
-app.include_router(admin_router)
 
 
 def build_tags(alert: WazuhAlert, owner_group: str, assignment_error: bool) -> list[str]:
@@ -54,10 +43,11 @@ def build_tags(alert: WazuhAlert, owner_group: str, assignment_error: bool) -> l
 
 
 def get_test_category(tags: list[str]) -> str:
-    for tag, test_name in config.categories.tag_to_test.items():
-        if tag in tags:
-            return test_name
-    return config.categories.default_test
+    if "threat-hunting" in tags:
+        return "Threat Hunting"
+    if "vulnerability-detector" in tags:
+        return "Vulnerability Detector"
+    return "General Monitoring"
 
 
 def get_endpoint_host(alert: WazuhAlert) -> str | None:

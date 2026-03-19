@@ -4,14 +4,12 @@ import logging
 from urllib.parse import quote
 from tenacity import retry, wait_exponential, stop_after_attempt
 from typing import Optional, Dict, Any
-from .config import DefectDojoConfig
 
 logger = logging.getLogger(__name__)
 
 class DefectDojoClient:
-    def __init__(self, base_url: str, api_key: str, dojo_config: DefectDojoConfig):
+    def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url
-        self.dojo_config = dojo_config
         self.headers = {
             "Authorization": f"Token {api_key}",
             "Content-Type": "application/json"
@@ -66,88 +64,28 @@ class DefectDojoClient:
         user = self.get_user(username)
         return bool(user and user.get("is_active", False))
 
-    def _list_all(self, endpoint: str) -> list[Dict[str, Any]]:
-        results: list[Dict[str, Any]] = []
-        next_endpoint = endpoint
-
-        while next_endpoint:
-            response = self._request("GET", next_endpoint)
-            if isinstance(response, dict) and "results" in response:
-                results.extend(response.get("results", []))
-                next_url = response.get("next")
-                if next_url and "/api/v2/" in next_url:
-                    next_endpoint = next_url.split("/api/v2/", 1)[1]
-                else:
-                    next_endpoint = None
-            else:
-                break
-
-        return results
-
-    def get_admin_options(self) -> Dict[str, list[Dict[str, Any]]]:
-        return {
-            "product_types": self._list_all("product_types/?limit=200"),
-            "products": self._list_all("products/?limit=200"),
-            "engagements": self._list_all("engagements/?limit=200"),
-            "tests": self._list_all("tests/?limit=200"),
-            "users": self._list_all("users/?limit=200"),
-        }
-
     def ensure_context(self, category: str = "General Monitoring") -> Dict[str, int]:
         """Ensures a default Product, Engagement, and category-specific Test exist."""
         cache_key = f"context:{category}"
         if cache_key in self.context_cache:
             return self.context_cache[cache_key]
 
-        product_type_cfg = self.dojo_config.product_type
-        product_cfg = self.dojo_config.product
-        engagement_cfg = self.dojo_config.engagement
-        test_cfg = self.dojo_config.test
-
         # 1. Product Type
-        pt_res = self._request("GET", f"product_types/?name={quote(product_type_cfg.name)}")
-        pt_id = pt_res["results"][0]["id"] if pt_res["count"] > 0 else self._request(
-            "POST",
-            "product_types/",
-            json={"name": product_type_cfg.name, "description": product_type_cfg.description},
-        )["id"]
+        pt_res = self._request("GET", "product_types/?name=Wazuh")
+        pt_id = pt_res["results"][0]["id"] if pt_res["count"] > 0 else self._request("POST", "product_types/", json={"name": "Wazuh", "description": "Wazuh Alerts"})["id"]
 
         # 2. Product
-        prod_res = self._request("GET", f"products/?name={quote(product_cfg.name)}")
-        prod_id = prod_res["results"][0]["id"] if prod_res["count"] > 0 else self._request(
-            "POST",
-            "products/",
-            json={"name": product_cfg.name, "description": product_cfg.description, "prod_type": pt_id},
-        )["id"]
+        prod_res = self._request("GET", "products/?name=Wazuh Endpoint Security")
+        prod_id = prod_res["results"][0]["id"] if prod_res["count"] > 0 else self._request("POST", "products/", json={"name": "Wazuh Endpoint Security", "description": "Alerts", "prod_type": pt_id})["id"]
 
         # 3. Engagement
-        eng_res = self._request("GET", f"engagements/?product={prod_id}&name={quote(engagement_cfg.name)}")
-        eng_id = eng_res["results"][0]["id"] if eng_res["count"] > 0 else self._request(
-            "POST",
-            "engagements/",
-            json={
-                "name": engagement_cfg.name,
-                "product": prod_id,
-                "target_start": engagement_cfg.target_start,
-                "target_end": engagement_cfg.target_end,
-                "status": engagement_cfg.status,
-            },
-        )["id"]
+        eng_res = self._request("GET", f"engagements/?product={prod_id}&name=Continuous Monitoring")
+        eng_id = eng_res["results"][0]["id"] if eng_res["count"] > 0 else self._request("POST", "engagements/", json={"name": "Continuous Monitoring", "product": prod_id, "target_start": "2020-01-01", "target_end": "2099-12-31", "status": "In Progress"})["id"]
 
         # 4. Test
-        test_title = f"{test_cfg.title_prefix} - {category}"
+        test_title = f"Wazuh Alerts - {category}"
         test_res = self._request("GET", f"tests/?engagement={eng_id}&title={quote(test_title)}")
-        test_id = test_res["results"][0]["id"] if test_res["count"] > 0 else self._request(
-            "POST",
-            "tests/",
-            json={
-                "title": test_title,
-                "engagement": eng_id,
-                "test_type": test_cfg.test_type_id,
-                "target_start": test_cfg.target_start,
-                "target_end": test_cfg.target_end,
-            },
-        )["id"]
+        test_id = test_res["results"][0]["id"] if test_res["count"] > 0 else self._request("POST", "tests/", json={"title": test_title, "engagement": eng_id, "test_type": 1, "target_start": "2020-01-01", "target_end": "2099-12-31"})["id"]
 
         context = {
             "product_type_id": pt_id,
