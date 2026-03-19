@@ -16,6 +16,10 @@ teams:
       - grace
       - Test1
     fallback_user: admin
+  SOC-Windows:
+    users:
+      -WindowsTest1
+    fallback_user: admin
 
 routing_rules:
   - match_rule_groups: ["windows"]
