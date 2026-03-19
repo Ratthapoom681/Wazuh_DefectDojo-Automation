@@ -180,6 +180,24 @@ button {
   margin: 0;
 }
 
+.create-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.create-choice.active {
+  background: var(--accent);
+  color: white;
+}
+
+.create-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .error {
   color: var(--danger);
 }
@@ -194,7 +212,8 @@ button {
   .hero,
   .form-grid,
   .category-grid,
-  .create-grid {
+  .create-grid,
+  .create-fields {
     grid-template-columns: 1fr;
   }
 }

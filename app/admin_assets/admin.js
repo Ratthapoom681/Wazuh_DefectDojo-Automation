@@ -24,6 +24,63 @@ const els = {
   routingRules: document.getElementById("routingRules"),
   tagRules: document.getElementById("tagRules"),
   inventory: document.getElementById("inventory"),
+  createPicker: document.getElementById("createPicker"),
+  createForm: document.getElementById("createForm"),
+  createTitle: document.getElementById("createTitle"),
+  createFields: document.getElementById("createFields"),
+  createSubmit: document.getElementById("createSubmit"),
+};
+
+const createSchemas = {
+  "product-type": {
+    title: "New Product Type",
+    submit: "Create Product Type",
+    fields: [
+      { name: "name", placeholder: "Infrastructure", required: true },
+      { name: "description", placeholder: "Description" },
+    ],
+  },
+  product: {
+    title: "New Product",
+    submit: "Create Product",
+    fields: [
+      { name: "name", placeholder: "Wazuh Endpoint Security", required: true },
+      { name: "description", placeholder: "Description", required: true },
+      { name: "prod_type", type: "number", placeholder: "Product Type ID", required: true },
+    ],
+  },
+  engagement: {
+    title: "New Engagement",
+    submit: "Create Engagement",
+    fields: [
+      { name: "name", placeholder: "Continuous Monitoring" },
+      { name: "product", type: "number", placeholder: "Product ID", required: true },
+      { name: "target_start", placeholder: "2026-03-19", required: true },
+      { name: "target_end", placeholder: "2027-03-19", required: true },
+      { name: "status", placeholder: "In Progress" },
+    ],
+  },
+  test: {
+    title: "New Test",
+    submit: "Create Test",
+    fields: [
+      { name: "title", placeholder: "Threat Hunting" },
+      { name: "engagement", type: "number", placeholder: "Engagement ID", required: true },
+      { name: "test_type", type: "number", placeholder: "Test Type ID", required: true },
+      { name: "target_start", placeholder: "2026-03-19T00:00:00Z", required: true },
+      { name: "target_end", placeholder: "2027-03-19T00:00:00Z", required: true },
+    ],
+  },
+  user: {
+    title: "New User",
+    submit: "Create User",
+    fields: [
+      { name: "username", placeholder: "WindowsTest1", required: true },
+      { name: "email", placeholder: "windows@example.com", required: true },
+      { name: "first_name", placeholder: "First name" },
+      { name: "last_name", placeholder: "Last name" },
+    ],
+  },
 };
 
 function pretty(value) {
@@ -149,14 +206,40 @@ async function loadAll() {
 }
 
 function hydrateCreateForms() {
+  const objectType = els.createForm.dataset.objectType || "product-type";
   const productTypeId = state.options.product_types?.find((item) => item.name === els.productTypeSelect.value)?.id;
   const productId = state.options.products?.find((item) => item.name === els.productSelect.value)?.id;
   const engagementId = state.options.engagements?.find((item) => item.name === els.engagementSelect.value)?.id;
 
-  document.querySelector('form[data-object-type="product"] input[name="prod_type"]').value = productTypeId || "";
-  document.querySelector('form[data-object-type="engagement"] input[name="product"]').value = productId || "";
-  document.querySelector('form[data-object-type="test"] input[name="engagement"]').value = engagementId || "";
-  document.querySelector('form[data-object-type="test"] input[name="test_type"]').value = els.testTypeId.value || 1;
+  const valueMap = {
+    prod_type: productTypeId || "",
+    product: productId || "",
+    engagement: engagementId || "",
+    test_type: els.testTypeId.value || 1,
+  };
+
+  for (const [name, value] of Object.entries(valueMap)) {
+    const input = els.createForm.querySelector(`[name="${name}"]`);
+    if (input && (objectType !== "user")) {
+      input.value = value;
+    }
+  }
+}
+
+function renderCreateForm(objectType) {
+  const schema = createSchemas[objectType];
+  els.createForm.dataset.objectType = objectType;
+  els.createTitle.textContent = schema.title;
+  els.createSubmit.textContent = schema.submit;
+  els.createFields.innerHTML = schema.fields.map((field) => {
+    const type = field.type || "text";
+    const required = field.required ? "required" : "";
+    return `<input name="${field.name}" type="${type}" placeholder="${field.placeholder}" ${required} />`;
+  }).join("");
+  document.querySelectorAll(".create-choice").forEach((button) => {
+    button.classList.toggle("active", button.dataset.objectType === objectType);
+  });
+  hydrateCreateForms();
 }
 
 async function saveConfig() {
@@ -244,10 +327,10 @@ async function handleCreateForm(event) {
   }
 }
 
-document.querySelectorAll(".create-card").forEach((form) => {
-  form.addEventListener("submit", handleCreateForm);
+els.createForm.addEventListener("submit", handleCreateForm);
+document.querySelectorAll(".create-choice").forEach((button) => {
+  button.addEventListener("click", () => renderCreateForm(button.dataset.objectType));
 });
-
 els.reloadBtn.addEventListener("click", loadAll);
 els.saveBtn.addEventListener("click", saveConfig);
 els.productTypeSelect.addEventListener("change", () => { syncSelectedObjectDetails(); hydrateCreateForms(); });
@@ -255,4 +338,5 @@ els.productSelect.addEventListener("change", () => { syncSelectedObjectDetails()
 els.engagementSelect.addEventListener("change", () => { syncSelectedObjectDetails(); hydrateCreateForms(); });
 els.testTypeId.addEventListener("change", hydrateCreateForms);
 
+renderCreateForm("product-type");
 loadAll();

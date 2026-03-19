@@ -106,51 +106,18 @@
 
       <section class="panel">
         <h2>Create DefectDojo Objects</h2>
-        <div class="create-grid">
-          <form class="create-card" data-object-type="product-type">
-            <h3>New Product Type</h3>
-            <input name="name" placeholder="Infrastructure" required />
-            <input name="description" placeholder="Description" />
-            <button class="primary" type="submit">Create Product Type</button>
-          </form>
-
-          <form class="create-card" data-object-type="product">
-            <h3>New Product</h3>
-            <input name="name" placeholder="Wazuh Endpoint Security" required />
-            <input name="description" placeholder="Description" required />
-            <input name="prod_type" type="number" placeholder="Product Type ID" required />
-            <button class="primary" type="submit">Create Product</button>
-          </form>
-
-          <form class="create-card" data-object-type="engagement">
-            <h3>New Engagement</h3>
-            <input name="name" placeholder="Continuous Monitoring" />
-            <input name="product" type="number" placeholder="Product ID" required />
-            <input name="target_start" placeholder="2026-03-19" required />
-            <input name="target_end" placeholder="2027-03-19" required />
-            <input name="status" placeholder="In Progress" />
-            <button class="primary" type="submit">Create Engagement</button>
-          </form>
-
-          <form class="create-card" data-object-type="test">
-            <h3>New Test</h3>
-            <input name="title" placeholder="Threat Hunting" />
-            <input name="engagement" type="number" placeholder="Engagement ID" required />
-            <input name="test_type" type="number" placeholder="Test Type ID" required />
-            <input name="target_start" placeholder="2026-03-19T00:00:00Z" required />
-            <input name="target_end" placeholder="2027-03-19T00:00:00Z" required />
-            <button class="primary" type="submit">Create Test</button>
-          </form>
-
-          <form class="create-card" data-object-type="user">
-            <h3>New User</h3>
-            <input name="username" placeholder="WindowsTest1" required />
-            <input name="email" placeholder="windows@example.com" required />
-            <input name="first_name" placeholder="First name" />
-            <input name="last_name" placeholder="Last name" />
-            <button class="primary" type="submit">Create User</button>
-          </form>
+        <div class="create-picker" id="createPicker">
+          <button class="ghost create-choice active" data-object-type="product-type" type="button">Product Type</button>
+          <button class="ghost create-choice" data-object-type="product" type="button">Product</button>
+          <button class="ghost create-choice" data-object-type="engagement" type="button">Engagement</button>
+          <button class="ghost create-choice" data-object-type="test" type="button">Test</button>
+          <button class="ghost create-choice" data-object-type="user" type="button">User</button>
         </div>
+        <form class="create-card" id="createForm">
+          <h3 id="createTitle">New Product Type</h3>
+          <div class="create-fields" id="createFields"></div>
+          <button class="primary" type="submit" id="createSubmit">Create</button>
+        </form>
       </section>
     </div>
   </div>
