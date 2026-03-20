@@ -176,6 +176,48 @@ class DefectDojoClient:
             return search["results"][0]
         return None
 
+    def find_existing_finding(self, finding_data: Dict[str, Any], endpoint_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        dedup_key = finding_data["unique_id_from_tool"]
+        existing_finding = self.get_finding_by_dedup(dedup_key)
+        if existing_finding:
+            logger.info("Pre-check matched existing DefectDojo finding by unique_id_from_tool for dedup key %s", dedup_key)
+            return existing_finding
+
+        title = finding_data.get("title")
+        test_id = finding_data.get("test")
+        cwe = finding_data.get("cwe")
+        network_tags = self._extract_network_tags(finding_data.get("tags", []))
+        if not title or not test_id:
+            return None
+
+        search = self._request("GET", f"findings/?test={test_id}&title={quote(title)}")
+        if not search or search.get("count", 0) == 0:
+            return None
+
+        for candidate in search.get("results", []):
+            candidate_cwe = candidate.get("cwe")
+            if cwe and candidate_cwe and int(candidate_cwe) != int(cwe):
+                continue
+
+            if endpoint_id is not None:
+                candidate_endpoint_ids = self._extract_related_ids(candidate.get("endpoints", []))
+                if endpoint_id not in candidate_endpoint_ids:
+                    continue
+
+            if network_tags:
+                candidate_tags = set(self._extract_tag_names(candidate.get("tags", [])))
+                if not (network_tags & candidate_tags):
+                    continue
+
+            logger.info(
+                "Pre-check matched existing DefectDojo finding %s by title/test%s before create",
+                candidate.get("id"),
+                " and endpoint/CWE/IP" if endpoint_id is not None or cwe or network_tags else "",
+            )
+            return candidate
+
+        return None
+
     def ensure_endpoint(self, host: str, product_id: int) -> Optional[int]:
         cache_key = f"{product_id}:{host}"
         if cache_key in self.endpoint_cache:
@@ -222,6 +264,12 @@ class DefectDojoClient:
                 names.append(value["name"])
         return names
 
+    def _extract_network_tags(self, values: list[str]) -> set[str]:
+        return {
+            value for value in values
+            if value.startswith("src_ip:") or value.startswith("observed_ip:") or value.startswith("dst_ip:")
+        }
+
     def _extract_reviewer_ids(self, finding: Dict[str, Any]) -> list[int]:
         reviewer_ids = self._extract_related_ids(finding.get("reviewers", []))
 
@@ -243,7 +291,7 @@ class DefectDojoClient:
         dedup_key = finding_data["unique_id_from_tool"]
 
         if existing_finding is None:
-            existing_finding = self.get_finding_by_dedup(dedup_key)
+            existing_finding = self.find_existing_finding(finding_data, endpoint_id=endpoint_id)
 
         payload = dict(finding_data)
         if existing_finding:

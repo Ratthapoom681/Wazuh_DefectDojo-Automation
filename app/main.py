@@ -52,6 +52,16 @@ def build_tags(alert: WazuhAlert, owner_group: str, assignment_error: bool) -> l
         if any(rule_matches(match, alert_tokens) for match in tag_rule.match_rule_groups):
             tags.extend(tag_rule.tags)
 
+    if alert.data:
+        for tag_name, field_name in (
+            ("src_ip", "srcip"),
+            ("observed_ip", "ip"),
+            ("dst_ip", "dstip"),
+        ):
+            value = alert.data.get(field_name)
+            if value:
+                tags.append(f"{tag_name}:{str(value).strip()}")
+
     if assignment_error:
         tags.append("assignment_error")
 
@@ -157,10 +167,6 @@ def process_alert(raw_payload: dict):
     cwe = extract_cwe(alert)
     if cwe:
         finding_data["cwe"] = cwe
-    
-    # DefectDojo uses reviewers as the assigned-user field.
-    if assigned_user_id:
-        finding_data["reviewers"] = [assigned_user_id]
 
     assign_note = f"Automated Routing: Mapped to group '{owner_group}'. Assigned to user '{assigned_user}'."
     endpoint_id = None
@@ -169,6 +175,12 @@ def process_alert(raw_payload: dict):
         endpoint_id = dd_client.ensure_endpoint(endpoint_host, product_id)
     else:
         logger.warning("No usable endpoint host found for alert %s", alert.id)
+
+    existing_finding = existing_finding or dd_client.find_existing_finding(finding_data, endpoint_id=endpoint_id)
+
+    # DefectDojo uses reviewers as the assigned-user field.
+    if assigned_user_id:
+        finding_data["reviewers"] = [assigned_user_id]
 
     # 5. Push to DefectDojo
     try:
